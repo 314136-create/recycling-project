@@ -1,0 +1,237 @@
+/* Style V5: Final Integration - CSS Liquid + Image Cup + Top Layer Character */
+:root {
+    --bg-color: #ffffff;
+    --font-sketch: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: var(--font-sketch);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    overflow: hidden;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 420px;
+    height: 100vh;
+    border: 3px solid black;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    background: white;
+}
+
+/* Header & Stats */
+.header-box {
+    border: 3px solid black;
+    border-radius: 15px;
+    padding: 10px 30px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.stats-box {
+    width: 100%;
+    border: 3px solid black;
+    padding: 15px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+/* Scene */
+.scene {
+    position: relative;
+    width: 320px;
+    height: 280px;
+    margin-bottom: 60px;
+    /* border: 1px solid red; /* Debug */
+}
+
+/* 
+   1. The CSS Liquid (Behind everything)
+   Simulates rising coffee.
+*/
+.liquid-box {
+    position: absolute;
+    bottom: 30px;
+    /* Align with bottom of cup image */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    /* Width of the liquid column */
+    height: 150px;
+    /* Max height */
+    overflow: hidden;
+    z-index: 5;
+    border-radius: 0 0 80px 80px;
+    /* Shape to fit cup bottom somewhat */
+}
+
+.liquid {
+    position: absolute;
+    bottom: -100%;
+    /* Start empty */
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #4e342e;
+    /* Coffee Color */
+    transition: bottom 4s linear;
+    /* Slow rise */
+}
+
+.liquid.rising {
+    bottom: 0;
+}
+
+/* 
+   2. The Cup Image (Middle)
+   Uses `mix-blend-mode: multiply` so the White Background becomes transparent,
+   allowing the Liquid (Z=5) to be seen "inside" the cup.
+*/
+.cup-img {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 200px;
+    background-image: url('images/cup_empty_new.png');
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: contain;
+    z-index: 10;
+    mix-blend-mode: multiply;
+    /* Crucial */
+}
+
+/* 
+   3. The Character (Top Layer)
+   User requested "Highest Layer".
+   Z-Index 50.
+*/
+.character {
+    position: absolute;
+    width: 130px;
+    height: 130px;
+    bottom: 100px;
+    /* Position inside cup */
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    /* Start hidden LOW */
+    background-image: url('images/sprites.png');
+    background-repeat: no-repeat;
+    z-index: 50;
+    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.baby .character {
+    background-position: center top;
+    background-size: 200% auto;
+}
+
+.cat .character {
+    background-position: center bottom;
+    background-size: 200% auto;
+}
+
+/* Active Pop */
+.character.active {
+    transform: translateX(-50%) translateY(-20px);
+    /* Pop Up */
+}
+
+/* 
+   4. Front Cover Mask (Hiding Body)
+   The Character is Z=50 (On Top). 
+   So we can see its legs through the cup? Yes.
+   We need a White Mask at Z=60 to cover the cup body area 
+   so the character looks like it's inside.
+*/
+.cup-mask {
+    position: absolute;
+    bottom: 25px;
+    /* Match cup bottom */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 195px;
+    /* Match cup body width */
+    height: 90px;
+    background: white;
+    border-radius: 0 0 90px 90px;
+    /* Match cup curve */
+    z-index: 60;
+    pointer-events: none;
+}
+
+/* 
+   5. Splash Droplets (Top Most)
+*/
+.splash-container {
+    position: absolute;
+    top: 40px;
+    /* Cup rim top */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    z-index: 70;
+}
+
+.droplet {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #4e342e;
+    border-radius: 50%;
+}
+
+/* Bubble */
+.bubble {
+    position: absolute;
+    top: -40px;
+    right: -10px;
+    background: white;
+    border: 3px solid black;
+    border-radius: 50%;
+    padding: 10px 20px;
+    font-weight: bold;
+    opacity: 0;
+    transform: scale(0);
+    transition: 0.5s;
+    z-index: 80;
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.bubble.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.hint {
+    position: absolute;
+    bottom: 20px;
+    color: #888;
+    font-weight: bold;
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0.5;
+    }
+}

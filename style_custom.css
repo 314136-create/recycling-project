@@ -1,0 +1,107 @@
+/* Custom Style: Strict "Cat Rising" Only */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+    font-family: sans-serif;
+}
+
+.phone-container {
+    position: relative;
+    width: 100%;
+    max-width: 450px;
+    height: 100vh;
+    /* Use the user's uploaded UI image as the background */
+    background-image: url('images/bg_final.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+.scene {
+    position: absolute;
+    /* Manually tuned positions to match the cup in bg_final.jpg */
+    top: 38%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 250px;
+    height: 200px;
+    /* border: 1px solid red; /* Debug */
+}
+
+/* 
+   1. The Blocker (Solid Coffee Color)
+   This patch sits ON TOP of the static cat in the image to hide it.
+   It creates a "Full Cup of Coffee" look.
+*/
+.coffee-mask {
+    position: absolute;
+    top: 85px;
+    /* Adjust to cover cat face */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 60px;
+    background: #5b3e31;
+    /* Matched coffee color */
+    border-radius: 50% 50% 10px 10px;
+    z-index: 20;
+    /* On top of everything static */
+}
+
+/* 
+   2. The Tail
+   Z-Index 15 (Behind Mask, but pops up).
+*/
+.tail {
+    position: absolute;
+    bottom: 60px;
+    left: 40px;
+    width: 25px;
+    height: 70px;
+    background: #ffcc66;
+    border: 3px solid #5b3e31;
+    border-radius: 20px;
+    z-index: 10;
+    transform-origin: bottom center;
+    transform: scaleY(0) rotate(-45deg);
+    transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tail.active {
+    transform: scaleY(1) rotate(-10deg);
+}
+
+/* 
+   3. The Cat Head
+   Z-Index 10 (Behind Mask).
+   Matches sprites.png cat.
+*/
+.cat-head {
+    position: absolute;
+    width: 130px;
+    height: 130px;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    /* Hidden deep */
+    background-image: url('images/sprites.png');
+    background-position: center bottom;
+    background-size: 200% auto;
+    background-repeat: no-repeat;
+    z-index: 10;
+    transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cat-head.active {
+    transform: translateX(-50%) translateY(0);
+    /* Pop Up */
+}
+
+/* No splash, No Bubble, No Text as requested "Nothing else" */

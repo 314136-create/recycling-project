@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baby Animation V4</title>
+    <link rel="stylesheet" href="static/style_v4.css">
+    <style>
+        /* Animation Overrides & Additions */
+
+        .stat-highlight {
+            color: #ff0000;
+            /* Red color for numbers */
+        }
+
+        /* Make Liquid Rise Faster (3s instead of 5s) */
+        .cup-full {
+            transition: clip-path 3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        /* FIX: Character Image was missing (sprites.png not found). Use baby.png from v2 */
+        .character {
+            /* Added white radial gradient behind to fill transparent eyes */
+            background-image: url('static/baby.png') !important;
+            background-size: contain !important;
+            background-repeat: no-repeat !important;
+            background-position: bottom center !important;
+            /* Ensure it has dimensions if original relied on sprite sizing? */
+            /* Width/Height are set by parent clipper (100%) so we are good */
+            transition: background-image 0.3s ease;
+            /* Smooth swap */
+        }
+
+        /* NEW CHARACTER: CAT (same format as baby) */
+        .character.cat {
+            background-image: url('static/cat.png') !important;
+            background-size: 280% auto !important;
+            background-repeat: no-repeat !important;
+            background-position: 10% calc(100% + 130px) !important;
+        }
+
+        /* NEW CHARACTER: FOX (Lv.10) - same format, hangs behind cup */
+        .character.fox {
+            background-image: url('static/fox.png') !important;
+            background-size: contain !important;
+            background-repeat: no-repeat !important;
+            background-position: center bottom !important;
+        }
+
+        /* Unlock Hint - Independent Element */
+        .unlock-hint {
+            position: absolute;
+            right: 5px;
+            top: 49%;
+            background: none;
+            color: rgba(100, 100, 100, 0.7);
+            font-size: 11px;
+            font-weight: bold;
+            white-space: nowrap;
+            z-index: 100;
+        }
+
+        .unlock-hint.hidden {
+            display: none;
+        }
+
+        /* Left Arrow - same style as right arrow but on left side */
+        .nav-arrow-left {
+            position: absolute;
+            left: 5px;
+            top: 55%;
+            transform: translateY(-50%);
+            font-size: 30px;
+            color: rgba(90, 58, 41, 0.6);
+            cursor: pointer;
+            z-index: 90;
+            user-select: none;
+            background: rgba(255, 255, 255, 0.4);
+            width: 40px;
+            height: 60px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            animation: pulse-arrow-left 2s infinite;
+        }
+
+        .nav-arrow-left.show {
+            display: flex;
+        }
+
+        .nav-arrow-left:hover {
+            background: rgba(255, 255, 255, 0.8);
+            color: #5A3A29;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        @keyframes pulse-arrow-left {
+
+            0%,
+            100% {
+                transform: translateY(-50%) translateX(0);
+            }
+
+            50% {
+                transform: translateY(-50%) translateX(-5px);
+            }
+        }
+
+
+        /* Adjust Clipper to be higher so baby sits on "top" of liquid */
+        .char-clipper {
+            bottom: 125px !important;
+            /* Adjusted to 125px to ensure firm "sticking" feeling */
+            /* z-index: 15; Already set in CSS */
+        }
+
+        /* Disable default CSS delays so JS can control sequence */
+        .active .character {
+            transition-delay: 0s !important;
+            /* Reset to hidden state initially even if active */
+            transform: translateY(120%);
+        }
+
+        /* Character Jump State - NO BOUNCE ("Cannot fly over") */
+        /* Fast Pop Animation (No bounce, stops firmly on surface) */
+        .character.jump {
+            transform: translateY(1%) !important;
+            /* Land/Stick firmly on surface (slight overlap) */
+            opacity: 1;
+            /* Ultra fast easing for immediate connection */
+            transition: transform 0.4s cubic-bezier(0.2, 1, 0.3, 1) !important;
+        }
+
+        /* CAT SPECIAL ANIMATION: Tail first, then head */
+        .character.cat.jump {
+            animation: catReveal 0.8s ease forwards !important;
+            transform: none !important;
+        }
+
+        @keyframes catReveal {
+            0% {
+                clip-path: inset(100% 0 0 0);
+                /* Hidden */
+                transform: translateY(1%);
+            }
+
+            40% {
+                clip-path: inset(60% 0 0 0);
+                /* Show tail (bottom 40%) */
+                transform: translateY(1%);
+            }
+
+            100% {
+                clip-path: inset(0 0 0 0);
+                /* Full reveal (head + body) */
+                transform: translateY(1%);
+            }
+        }
+
+        /* Bubble Control */
+        .active .bubble {
+            transition-delay: 0s !important;
+            opacity: 0;
+            transform: scale(0);
+        }
+
+        .bubble.show-bubble {
+            opacity: 1;
+            transform: scale(1);
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            /* 讓氣泡內的文字置中 */
+            text-align: center;
+            line-height: 1.2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Splash Animation Styles from V2 */
+        .splash-container {
+            position: absolute;
+            bottom: 125px;
+            /* Align with new clipper bottom/rim */
+            left: 50%;
+            transform: translate(-50%, 0);
+            width: 0;
+            height: 0;
+            z-index: 60;
+            pointer-events: none;
+        }
+
+        .droplet {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #5A3A29;
+            /* Coffee color */
+            border-radius: 50%;
+        }
+
+        /* --- NEW STYLES: EXP Bar & Week Chart --- */
+
+        /* EXP Bar Styles */
+        .exp-wrapper {
+            width: 90%;
+            max-width: 400px;
+            margin: 10px auto;
+            text-decoration: none;
+            display: block;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .exp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .exp-progress-container {
+            width: 100%;
+            height: 12px;
+            background: #eee;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .exp-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FFC107, #FF9800);
+            /* Gold/Orange for EXP */
+            width: 0%;
+            /* Start at 0 */
+            border-radius: 6px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Week Chart Styles */
+
+        /* 標題移到框外 */
+        .chart-title-outer {
+            width: 90%;
+            max-width: 400px;
+            margin: 15px auto 8px auto;
+            font-size: 14px;
+            font-weight: bold;
+            color: #5A3A29;
+            text-align: center;
+        }
+
+        .chart-box {
+            width: 90%;
+            max-width: 400px;
+            margin: 0 auto 30px auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: row;
+            /* 橫向排列：Y軸 + 圖表 */
+            flex-shrink: 0;
+            border: 1px solid #eee;
+        }
+
+        /* Y軸刻度容器 */
+        .chart-y-axis {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-right: 8px;
+            height: 100px;
+            /* 與圖表高度一致 */
+        }
+
+        .y-label {
+            font-size: 11px;
+            color: #999;
+            line-height: 1;
+        }
+
+        /* 圖表內容區（長條圖） */
+        .chart-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-bars {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 100px;
+            padding-bottom: 0;
+            border-bottom: 1px solid #ddd;
+            border-left: 1px solid #ddd;
+            position: relative;
+        }
+
+        .bar-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            height: 100%;
+            justify-content: flex-end;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .bar-group:hover {
+            transform: scale(1.05);
+        }
+
+        .bar-group:active {
+            transform: scale(0.95);
+        }
+
+        .bar {
+            width: 60%;
+            background: linear-gradient(180deg, #7B5544 0%, #5A3A29 100%);
+            border-radius: 4px 4px 0 0;
+            min-height: 4px;
+            position: relative;
+            transition: height 0.6s ease, transform 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .bar:hover {
+            transform: scaleY(1.05);
+            opacity: 0.9;
+        }
+
+        .day-label {
+            margin-top: 8px;
+            font-size: 11px;
+            color: #666;
+            font-weight: 500;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        /* --- UNLOCK MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 20px;
+            text-align: center;
+            width: 80%;
+            max-width: 320px;
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .modal-ribbon {
+            display: inline-block;
+            font-size: 24px;
+            margin-left: 5px;
+            animation: wave 1s infinite alternate;
+        }
+
+        @keyframes wave {
+            from {
+                transform: rotate(-10deg);
+            }
+
+            to {
+                transform: rotate(10deg);
+            }
+        }
+
+        .modal-btn {
+            background: #5A3A29;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-top: 15px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* Navigation Arrow */
+        .nav-arrow {
+            position: absolute;
+            right: 15px;
+            top: 55%;
+            /* Slightly below center to clear bubble/cup */
+            transform: translateY(-50%);
+            font-size: 30px;
+            color: rgba(90, 58, 41, 0.6);
+            /* Coffee tone */
+            cursor: pointer;
+            z-index: 90;
+            user-select: none;
+            background: rgba(255, 255, 255, 0.4);
+            width: 40px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            animation: pulse-arrow 2s infinite;
+        }
+
+        .nav-arrow:hover {
+            background: rgba(255, 255, 255, 0.8);
+            color: #5A3A29;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        @keyframes pulse-arrow {
+
+            0%,
+            100% {
+                transform: translateY(-50%) translateX(0);
+            }
+
+            50% {
+                transform: translateY(-50%) translateX(5px);
+            }
+        }
+
+        /* User Info Bar */
+        .user-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-bar .username {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .user-bar .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .user-bar .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Adjust body padding to account for fixed user bar */
+        body.baby {
+            padding-top: 50px;
+        }
+    </style>
+</head>
+
+<body class="baby">
+    <!-- 用戶資訊欄 -->
+    <div class="user-bar">
+        <span class="username">👤 {{ username }}</span>
+        <a href="/logout" class="logout-btn">登出</a>
+    </div>
+
+    <div class="app-container" onclick="play()">
+        <div class="header-box">Reborn</div>
+
+
+        <div class="stats-box">
+            <!-- Experience Bar -->
+            <div class="exp-wrapper">
+                <div class="exp-header">
+                    <span>我的經驗值 (EXP)</span>
+                    <span style="color:#FF9800;" id="level-display">Lvl. {{ level | default(0) }}</span>
+                </div>
+                <div class="exp-progress-container">
+                    <div class="exp-progress-fill" id="exp-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="scene">
+            <div class="char-clipper">
+                <div class="character"></div>
+            </div>
+
+            <div class="cup-empty"></div>
+
+            <div class="cup-full"></div>
+
+        </div>
+
+        <!-- Dialogue Bubble (Between Scene and Chart) -->
+        <div class="bubble">
+            <span id="encourage-msg" style="font-size: 13px; line-height: 1.3;"></span>
+            <a href="/scan" onclick="event.stopPropagation();"
+                style="text-decoration: none; font-size: 18px; cursor: pointer; margin-left: 10px;">
+                📷 拍照挑戰
+            </a>
+        </div>
+
+        <!-- Weekly Usage Chart -->
+        <div class="chart-title-outer">本週咖啡時光 (小時)</div>
+        <div class="chart-box">
+            <!-- Y軸刻度 - 固定值 -->
+            <div class="chart-y-axis">
+                <span class="y-label">6h</span>
+                <span class="y-label">4h</span>
+                <span class="y-label">2h</span>
+                <span class="y-label">0h</span>
+            </div>
+            <!-- 長條圖區域 -->
+            <div class="chart-content">
+                <div class="chart-bars">
+                    {% set day_names = ['一', '二', '三', '四', '五', '六', '日'] %}
+                    {% set day_full_names = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'] %}
+                    {% set max_hours = 6 %}
+                    {% for i in range(7) %}
+                    {% set hours = chart_data[i] if chart_data else 0 %}
+                    {% set height_pct = (hours / max_hours * 100) if hours <= max_hours else 100 %} <div
+                        class="bar-group" onclick="showDayDetails({{ i }}, '{{ day_full_names[i] }}')">
+                        <div class="bar" style="height: {{ height_pct }}%;" title="點選查看詳情"></div>
+                        <div class="day-label">{{ day_names[i] }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Left Arrow (for going back after unlock) -->
+    <div class="nav-arrow-left" id="nav-arrow-left" onclick="goBack()">&#10094;</div>
+
+    <!-- Unlock Hint (Independent) -->
+    <div class="unlock-hint" id="unlock-hint">Lv.5 解鎖</div>
+
+    <!-- Right Arrow (Independent) -->
+    <div class="nav-arrow" onclick="goForward()">&#10095;</div>
+    </div>
+
+    <!-- Day Details Modal -->
+    <div class="modal-overlay" id="day-details-modal" onclick="closeDayModal(event)">
+        <div class="modal-content" style="max-width: 350px;" onclick="event.stopPropagation()">
+            <div class="modal-title" id="day-modal-title">
+                📅 星期一 使用記錄
+            </div>
+            <div id="day-sessions-list" style="max-height: 250px; overflow-y: auto; margin: 15px 0;">
+                <!-- 記錄會動態填入 -->
+            </div>
+            <button class="modal-btn" onclick="closeDayModal()">關閉</button>
+        </div>
+    </div>
+
+    <!-- 將 sessions 數據傳給 JavaScript -->
+    <script>
+        const sessionsData = {{ sessions_data | tojson | safe }};
+    </script>
+
+    <!-- Unlock Modal -->
+    <div class="modal-overlay" id="unlock-modal">
+        <div class="modal-content">
+            <div class="modal-title">
+                恭喜解鎖新角色
+                <span class="modal-ribbon">🎊</span>
+            </div>
+            <p style="color:#666; margin-bottom:15px;" id="modal-msg">你已經達到了 Level 5!</p>
+            <button class="modal-btn" onclick="closeModal()">太棒了!</button>
+        </div>
+    </div>
+
+    <script>
+        const scene = document.querySelector('.scene');
+        const character = document.querySelector('.character');
+        const bubble = document.querySelector('.bubble');
+        let isPlaying = false;
+
+        // --- EXP & Level System ---
+        let currentExp = {{ xp | default (0) }};
+        let maxExp = 50;
+        let currentLevel = {{ level | default (0) }};
+
+        // Initialize UI on load
+        updateExpUI();
+
+        // Function called if we need to animate (e.g. if we passed gained XP via URL param)
+        // For now, it just shows current state.
+
+        function updateExpUI() {
+            // Calculate progress within current level
+            // Note: backend 'xp' is total accumulated XP. 
+            // We need to calculate how far into the current level we are.
+            // Formula: level = (xp // 50) + 1
+            // So xp in current level = xp % 50
+
+            let levelExp = currentExp % maxExp;
+            const pct = (levelExp / maxExp) * 100;
+
+            document.getElementById('exp-fill').style.width = pct + '%';
+            document.getElementById('level-display').innerText = 'Lvl. ' + currentLevel;
+        }
+
+        // --- Unlock Modal ---
+        function showUnlockModal(lvl) {
+            const modal = document.getElementById('unlock-modal');
+            document.getElementById('modal-msg').innerText = `你已經達到了 Level ${lvl}，獲得新夥伴！`;
+            modal.classList.add('show');
+            createConfetti(); // Optional extra JS confetti if needed, but CSS ribbon is there
+        }
+
+        function closeModal() {
+            document.getElementById('unlock-modal').classList.remove('show');
+        }
+
+        function createConfetti() {
+            // Simple visual effect could go here
+        }
+
+        // --- Character Switch (Arrow Click) ---
+        // Characters array: baby(0), cat(5), fox(10)
+        const characters = ['baby', 'cat', 'fox'];
+        const characterUnlockLevels = [0, 5, 10];  // Level needed to unlock each
+
+        // Restore saved character index from localStorage
+        let currentCharacterIndex = parseInt(localStorage.getItem('currentCharacterIndex')) || 0;
+
+        // Apply saved character state on page load
+        function applyCharacterClass() {
+            // Remove all character classes first
+            character.classList.remove('cat', 'fox');
+            // Add current character class (baby has no special class)
+            if (characters[currentCharacterIndex] === 'cat') {
+                character.classList.add('cat');
+            } else if (characters[currentCharacterIndex] === 'fox') {
+                character.classList.add('fox');
+            }
+        }
+        applyCharacterClass();
+
+        // Save character state when switching
+        function saveCharacterState() {
+            localStorage.setItem('currentCharacterIndex', currentCharacterIndex.toString());
+        }
+
+        // Legacy compatibility
+        let isCat = currentCharacterIndex === 1;
+
+        // All unlock levels with character names
+        const unlockCharacters = {
+            0: "🌱 回收見習生",
+            5: "🌿 綠色守護者",
+            10: "🛡️ 地球防衛隊",
+            15: "🔥 環保熱血戰士",
+            20: "🌊 海洋淨化使者",
+            25: "⛰️ 山林守護神",
+            30: "🌍 行星指揮官",
+            35: "🌟 銀河回收大師",
+            40: "👑 宇宙環保霸主",
+            50: "💎 傳說中的清潔神"
+        };
+        const unlockLevels = [0, 5, 10, 15, 20, 25, 30, 35, 40, 50];
+
+        // Get next unlock level based on current level
+        function getNextUnlockLevel() {
+            for (let lvl of unlockLevels) {
+                if (currentLevel < lvl) {
+                    return lvl;
+                }
+            }
+            return null; // All unlocked
+        }
+
+        // Get character name for a level
+        function getCharacterName(lvl) {
+            return unlockCharacters[lvl] || '';
+        }
+
+        // Check if a character at index is unlocked
+        function isCharacterUnlocked(index) {
+            return currentLevel >= characterUnlockLevels[index];
+        }
+
+        // Check if cat is unlocked (level >= 5) - legacy
+        function isCatUnlocked() {
+            return currentLevel >= 5;
+        }
+
+        // Right arrow: go forward (to newer character)
+        function goForward() {
+            const nextIndex = currentCharacterIndex + 1;
+
+            // Check if there's a next character
+            if (nextIndex >= characters.length) {
+                return; // Already at last character
+            }
+
+            // Check if next character is unlocked
+            if (!isCharacterUnlocked(nextIndex)) {
+                const neededLevel = characterUnlockLevels[nextIndex];
+                alert("升到 Lv." + neededLevel + " 即可解鎖新角色！");
+                return;
+            }
+
+            currentCharacterIndex = nextIndex;
+            isCat = currentCharacterIndex === 1; // Legacy compatibility
+            applyCharacterClass();
+            saveCharacterState();
+            updateArrowState();
+        }
+
+        // Left arrow: go back (to older character)
+        function goBack() {
+            if (currentCharacterIndex > 0) {
+                currentCharacterIndex--;
+                isCat = currentCharacterIndex === 1; // Legacy compatibility
+                applyCharacterClass();
+                saveCharacterState();
+                updateArrowState();
+            }
+        }
+
+        // Update arrow appearance based on unlock status
+        function updateArrowState() {
+            const arrow = document.querySelector('.nav-arrow');
+            const leftArrow = document.getElementById('nav-arrow-left');
+            const hint = document.getElementById('unlock-hint');
+            const nextLevel = getNextUnlockLevel();
+
+            // Check if next character is unlocked (for implemented characters)
+            const nextIndex = currentCharacterIndex + 1;
+            const nextCharacterUnlocked = nextIndex < characters.length && isCharacterUnlocked(nextIndex);
+            const hasNextCharacter = nextIndex < characters.length;
+
+            // Right arrow: always show, display next unlock level if not all unlocked
+            if (arrow) {
+                arrow.style.display = 'flex';
+                if (hasNextCharacter && nextCharacterUnlocked) {
+                    arrow.style.opacity = '1';
+                    arrow.title = '點擊切換角色';
+                } else if (nextLevel !== null) {
+                    // Show next unlock level (even if no character image yet)
+                    arrow.style.opacity = '0.5';
+                    arrow.title = 'Lv.' + nextLevel + ' 解鎖';
+                } else {
+                    arrow.style.display = 'none'; // All unlocked
+                }
+            }
+
+            // Left arrow: show when not on first character
+            if (leftArrow) {
+                if (currentCharacterIndex > 0) {
+                    leftArrow.classList.add('show');
+                } else {
+                    leftArrow.classList.remove('show');
+                }
+            }
+
+            // Unlock hint: only show on the page BEFORE the one to unlock
+            // Show hint when the next character (from current page) is NOT yet unlocked
+            if (hint) {
+                // Get the unlock level for the next character in sequence
+                // unlockLevels = [0, 5, 10, 15, 20, 25, 30, 35, 40, 50]
+                // Current character index maps to which unlock level we're on
+                const currentCharUnlockLevel = unlockLevels[currentCharacterIndex] || 0;
+                const nextCharUnlockLevel = unlockLevels[currentCharacterIndex + 1] || null;
+
+                // Show hint only if there's a next level AND we haven't reached it yet
+                if (nextCharUnlockLevel !== null && currentLevel < nextCharUnlockLevel) {
+                    hint.innerText = 'Lv.' + nextCharUnlockLevel + ' 解鎖';
+                    hint.classList.remove('hidden');
+                } else {
+                    hint.classList.add('hidden');
+                }
+            }
+        }
+
+        // Call on page load
+        updateArrowState();
+
+        // --- Existing Animation Logic ---
+        function createSplash() {
+            const splash = document.createElement('div');
+            splash.classList.add('splash-container');
+            scene.appendChild(splash);
+
+            // Create droplets
+            for (let i = 0; i < 20; i++) {
+                let d = document.createElement('div');
+                d.classList.add('droplet');
+                splash.appendChild(d);
+
+                const r = Math.random() * Math.PI * 2;
+                const f = 50 + Math.random() * 80;
+                const dx = Math.cos(r) * f;
+                const dy = Math.sin(r) * f - 50;
+
+                d.animate([
+                    { transform: 'translate(0,0) scale(1)', opacity: 1 },
+                    { transform: `translate(${dx}px, ${dy}px) scale(0.6)`, opacity: 0.8, offset: 0.5 },
+                    { transform: `translate(${dx * 1.2}px, ${dy + 150}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: 600 + Math.random() * 300,
+                    fill: 'forwards',
+                    easing: 'cubic-bezier(0.25, 1, 0.5, 1)'
+                }).onfinish = () => d.remove();
+            }
+
+            // Clean up container
+            setTimeout(() => splash.remove(), 1000);
+        }
+
+        function play() {
+            if (isPlaying) return;
+
+            // If animation already played, do nothing (don't reset)
+            if (scene.classList.contains('active')) {
+                return;
+            }
+
+            isPlaying = true;
+
+            // 1. Start Filling (Liquid Rises)
+            scene.classList.add('filling');
+            scene.classList.add('active');
+
+            // 2. Character Jump + Splash (After liquid rises 3s)
+            // Trigger slightly before 3000ms (2950ms) to ensure seamless connection
+            setTimeout(() => {
+                character.classList.add('jump');
+                createSplash();
+            }, 2950);
+
+            // 3. Bubble appears (After character jump lands)
+            setTimeout(() => {
+                bubble.classList.add('show-bubble');
+                isPlaying = false;
+                // Mark that animation has played
+                sessionStorage.setItem('animationPlayed', 'true');
+            }, 3550); // 2950 + 400 (jump) + buffer
+        }
+
+        // --- Check if returning from quiz (skip animation) ---
+        function checkAndShowState() {
+            const hasPlayed = sessionStorage.getItem('animationPlayed');
+
+            if (hasPlayed === 'true') {
+                // Skip animation, show final state immediately
+                scene.classList.add('filling');
+                scene.classList.add('active');
+
+                // Restore character class from saved state
+                applyCharacterClass();
+
+                character.classList.add('jump');
+                bubble.classList.add('show-bubble');
+
+                // Hide "click to start" hint
+                const hint = document.querySelector('.hint');
+                if (hint) {
+                    hint.style.display = 'none';
+                }
+
+                // Update arrow state
+                updateArrowState();
+            }
+        }
+
+        // Run on page load
+        checkAndShowState();
+
+        // --- Generate Encouraging Message Based on Weekly Usage ---
+        function generateEncouragement() {
+            // Get usage data from chart bars (percentage values)
+            const bars = document.querySelectorAll('.bar');
+            const dayNames = ['一', '二', '三', '四', '五', '六', '日'];
+            let usageData = [];
+
+            bars.forEach((bar, i) => {
+                const heightStr = bar.style.height;
+                const pct = parseInt(heightStr) || 0;
+                usageData.push({ day: dayNames[i], pct: pct });
+            });
+
+            // Calculate stats
+            const total = usageData.reduce((sum, d) => sum + d.pct, 0);
+            const avg = total / usageData.length;
+            const maxDay = usageData.reduce((a, b) => a.pct > b.pct ? a : b);
+            const minDay = usageData.reduce((a, b) => a.pct < b.pct ? a : b);
+
+            // Generate message based on analysis
+            let msg = "";
+
+            if (avg >= 60) {
+                msg = "太棒了！👏 本週使用超勤奮，繼續保持！";
+            } else if (avg >= 40) {
+                msg = "不錯喔！✨ 穩定使用中，再接再厲！";
+            } else if (avg >= 20) {
+                msg = "加油！💪 可以再多用一點，養成習慣！";
+            } else {
+                msg = "來杯咖啡吧！☕ 記得常來找我玩喔～";
+            }
+
+            // Add specific day highlight
+            if (maxDay.pct > 50) {
+                msg += `\n週${maxDay.day}最活躍！🌟`;
+            }
+
+            // Update bubble
+            const msgEl = document.getElementById('encourage-msg');
+            if (msgEl) {
+                msgEl.innerHTML = msg.replace('\n', '<br>');
+            }
+        }
+
+        // Generate on page load
+        generateEncouragement();
+
+        // === 顯示當天使用記錄 ===
+        function showDayDetails(dayIndex, dayName) {
+            const modal = document.getElementById('day-details-modal');
+            const title = document.getElementById('day-modal-title');
+            const list = document.getElementById('day-sessions-list');
+
+            // 設定標題
+            title.innerHTML = `📅 ${dayName} 使用記錄`;
+
+            // 取得該天的 sessions
+            const sessions = sessionsData[dayIndex] || [];
+
+            if (sessions.length === 0) {
+                list.innerHTML = `
+                    <div style="text-align: center; color: #999; padding: 30px 0;">
+                        <div style="font-size: 40px; margin-bottom: 10px;">📭</div>
+                        <div>這天還沒有使用記錄喔～</div>
+                    </div>
+                `;
+            } else {
+                let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+                sessions.forEach((session, idx) => {
+                    html += `
+                        <div style="background: #FFFAF5; border-radius: 10px; padding: 12px; border: 1px solid #EEE;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: #888; font-size: 12px;">第 ${idx + 1} 次</span>
+                                <span style="background: #5A3A29; color: white; padding: 3px 8px; border-radius: 10px; font-size: 11px;">
+                                    ${session.duration}
+                                </span>
+                            </div>
+                            <div style="margin-top: 8px; font-size: 14px; color: #333;">
+                                <span style="color: #4CAF50;">▸ 開始</span> ${session.start}<br>
+                                <span style="color: #e76f51;">◂ 結束</span> ${session.end}
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                list.innerHTML = html;
+            }
+
+            // 顯示 Modal
+            modal.classList.add('show');
+        }
+
+        function closeDayModal(event) {
+            const modal = document.getElementById('day-details-modal');
+            // 如果點的是背景或沒有傳 event（直接點按鈕），就關閉
+            if (!event || event.target === modal) {
+                modal.classList.remove('show');
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <title>辨識結果與測驗</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3e2723;
+            --coffee-color: #5A3A29;
+            --accent-color: #FF9800;
+            --bg-color: #FFF8F0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--bg-color) 0%, #FFEEDD 100%);
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 500px;
+            margin: 0 auto;
+            box-shadow: 0 10px 40px rgba(62, 39, 35, 0.15);
+        }
+
+        .header {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 15px;
+            border: 3px solid var(--coffee-color);
+            margin-bottom: 15px;
+            max-height: 200px;
+            object-fit: cover;
+        }
+
+        .item-result {
+            background: #FFFAF5;
+            border: 1px solid #EEE;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            color: var(--coffee-color);
+            text-align: left;
+            line-height: 1.8;
+        }
+
+        .item-result .label {
+            font-weight: bold;
+            display: inline;
+        }
+
+        .scroll-hint {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ddd;
+            animation: bounce-hint 1.5s infinite;
+        }
+
+        @keyframes bounce-hint {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(5px);
+            }
+        }
+
+        .quiz-section {
+            background: #FFFAF5;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: left;
+            margin-top: 15px;
+            border: 1px solid #EEE;
+        }
+
+        .question-text {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .options-text {
+            white-space: pre-wrap;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: #555;
+            line-height: 1.8;
+            border: 1px solid #EEE;
+        }
+
+        .answer-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .ans-btn {
+            background: var(--coffee-color);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(90, 58, 41, 0.2);
+        }
+
+        .ans-btn:active {
+            transform: scale(0.95);
+        }
+
+        .ans-btn:hover {
+            background: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: var(--coffee-color);
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Result Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(62, 39, 35, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: white;
+            color: #333;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 90%;
+            width: 350px;
+            transform: scale(0.8);
+            transition: transform 0.3s;
+            position: relative;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+
+        .result-icon {
+            font-size: 50px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .result-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .xp-change {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .xp-gain {
+            color: #4CAF50;
+        }
+
+        .result-msg {
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #666;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+            background: #FFFAF5;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #EEE;
+        }
+
+        .confirm-btn {
+            background: var(--coffee-color);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(90, 58, 41, 0.3);
+        }
+
+        .confirm-btn:hover {
+            background: var(--primary-color);
+        }
+
+        /* Loading Spinner */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--coffee-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* User Info Bar */
+        .user-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-bar .username {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .user-bar .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .user-bar .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        body {
+            padding-top: 60px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 用戶資訊欄 -->
+    <div class="user-bar">
+        <span class="username">👤 {{ username }}</span>
+        <a href="/logout" class="logout-btn">登出</a>
+    </div>
+
+    <div class="card">
+        <div class="header">♻️ 回收知識大挑戰</div>
+
+        <img src="{{ url_for('uploaded_file', filename=image_file) }}">
+        <div class="item-result">
+            {{ item_result | replace('\n', '<br>') | safe }}
+            <div class="scroll-hint">👇 往下滑猜猜看...</div>
+        </div>
+
+        <div class="quiz-section">
+            <div class="question-text">Q: {{ question }}</div>
+
+            <div class="options-text">{{ options }}</div>
+
+            <div style="text-align:center; margin-bottom:10px; color:#888; font-size:0.9em;">請選擇正確答案：</div>
+
+            <div class="answer-buttons" id="btn-group">
+                <button class="ans-btn" onclick="submitAnswer('A')">A</button>
+                <button class="ans-btn" onclick="submitAnswer('B')">B</button>
+                <button class="ans-btn" onclick="submitAnswer('C')">C</button>
+                <button class="ans-btn" onclick="submitAnswer('D')">D</button>
+            </div>
+
+            <div class="loader" id="loader"></div>
+        </div>
+
+        <a href="/" class="back-link">← 如果是誤判，點此返回首頁</a>
+    </div>
+
+    <!-- Result Modal -->
+    <div class="modal-overlay" id="result-modal">
+        <div class="modal-content">
+            <span class="result-icon" id="res-icon">🎉</span>
+            <span class="result-title" id="res-title">答對了!</span>
+            <span class="xp-change" id="res-xp">+50 EXP</span>
+
+            <div class="result-msg" id="res-msg">
+                這是詳細解說...
+            </div>
+
+            <button class="confirm-btn" onclick="goHome()">確定</button>
+        </div>
+    </div>
+
+    <script>
+        function submitAnswer(ans) {
+            // Disable buttons
+            const btns = document.querySelectorAll('.ans-btn');
+            btns.forEach(b => b.disabled = true);
+            document.getElementById('btn-group').style.opacity = '0.5';
+            document.getElementById('loader').style.display = 'block';
+
+            // Send to backend
+            fetch('/submit_answer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ answer: ans })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    showResult(data);
+                })
+                .catch(error => {
+                    alert('發生錯誤，請稍後再試');
+                    console.error('Error:', error);
+                    btns.forEach(b => b.disabled = false);
+                    document.getElementById('btn-group').style.opacity = '1';
+                    document.getElementById('loader').style.display = 'none';
+                });
+        }
+
+        function showResult(data) {
+            const modal = document.getElementById('result-modal');
+            const icon = document.getElementById('res-icon');
+            const title = document.getElementById('res-title');
+            const xp = document.getElementById('res-xp');
+            const msg = document.getElementById('res-msg');
+
+            document.getElementById('loader').style.display = 'none';
+
+            if (data.correct) {
+                icon.innerText = "🎉";
+                title.innerText = "答對了！";
+                title.style.color = "#4CAF50";
+                xp.className = "xp-change xp-gain";
+                xp.innerText = `+${data.gained_xp} EXP`;
+            } else {
+                icon.innerText = "😅";
+                title.innerText = "答錯了...";
+                title.style.color = "#e76f51";
+                xp.className = "xp-change";
+                xp.innerText = `+${data.gained_xp} XP (安慰獎)`;
+            }
+
+            let content = "";
+            if (!data.correct) {
+                content += `<strong>正確答案是: ${data.correct_answer}</strong><br><br>`;
+            }
+            content += data.explanation.replace(/\n/g, '<br>');
+
+            if (data.leveled_up) {
+                content += `<br><br><strong style="color:#FF9800">🎊 恭喜升級到 Lv.${data.new_level}! 🎊</strong>`;
+            }
+
+            msg.innerHTML = content;
+
+            modal.classList.add('show');
+        }
+
+        function goHome() {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+
+</html>

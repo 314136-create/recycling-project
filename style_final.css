@@ -1,0 +1,243 @@
+/* Final Style matching the requested new image and animation */
+:root {
+    --bg-color: #ffffff;
+    --font-hand: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+    --primary-brown: #4e342e;
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: var(--font-hand);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    /* Prevent scrollbars during animation */
+}
+
+/* Container */
+.app-container {
+    width: 100%;
+    max-width: 420px;
+    height: 100vh;
+    border: 3px solid black;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    background: white;
+}
+
+/* Header & Stats (Sketchy look) */
+.header-box {
+    border: 3px solid black;
+    border-radius: 15px;
+    padding: 10px 30px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.stats-box {
+    width: 100%;
+    border: 3px solid black;
+    padding: 15px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.stat-item {
+    border-bottom: 2px solid #ccc;
+    padding: 5px 0;
+    font-size: 1.1rem;
+}
+
+/* Scene Container - Moved to Bottom */
+.scene {
+    position: relative;
+    width: 300px;
+    height: 250px;
+    /* Adjusted height */
+    margin-top: auto;
+    /* Push to bottom */
+    margin-bottom: 50px;
+    /* Above the hint text */
+}
+
+/*
+   1. The Cup Asset (Background Layer)
+   Z-Index 10. Base layer.
+*/
+.cup-layer {
+    position: absolute;
+    width: 280px;
+    height: 180px;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-image: url('images/cup_single.png');
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: contain;
+    z-index: 10;
+}
+
+/*
+   2. Liquid Mask (Concealer)
+   Z-Index 15. Sits on top of Cup Image to hide coffee.
+*/
+.liquid-concealer {
+    position: absolute;
+    top: 60px;
+    left: 40px;
+    width: 200px;
+    height: 40px;
+    background: white;
+    border-radius: 50%;
+    z-index: 15;
+
+    transform-origin: top;
+    transform: scaleY(1);
+    transition: transform 5s linear;
+}
+
+.filling .liquid-concealer {
+    transform: scaleY(0);
+}
+
+/*
+   3. Character
+   Z-Index 20. Sits IN FRONT of the Cup/Liquid.
+*/
+.character-layer {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(50px);
+    background-image: url('images/sprites.png');
+    background-repeat: no-repeat;
+    z-index: 20;
+    transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+}
+
+.baby .character-layer {
+    background-position: center top;
+    background-size: 200% auto;
+}
+
+.cat .character-layer {
+    background-position: center bottom;
+    background-size: 200% auto;
+}
+
+/* 
+   4. Front Cover (The "Body" of the Cup)
+   Z-Index 30.
+   A white shape that covers the bottom of the character
+   so it looks like it's inside the cup.
+*/
+.front-cover {
+    position: absolute;
+    bottom: 25px;
+    /* Match cup bottom visual */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 190px;
+    /* Width of white cup body */
+    height: 80px;
+    /* Height of white cup body */
+    background: white;
+    border-radius: 0 0 90px 90px;
+    /* Cup Curve */
+    z-index: 30;
+    pointer-events: none;
+}
+
+/* Pop Animation */
+.character-layer.active {
+    opacity: 1;
+    /* Move UP above the Front Cover */
+    transform: translateX(-50%) translateY(-60px);
+}
+
+/* Splash Styles */
+.splash-container {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    z-index: 60;
+}
+
+.droplet {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #4e342e;
+    border-radius: 50%;
+}
+
+/* Suggestion Bubble */
+.bubble {
+    position: absolute;
+    top: -50px;
+    right: -20px;
+    background: white;
+    border: 3px solid black;
+    border-radius: 50%;
+    padding: 10px 15px;
+    font-weight: bold;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 50;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.bubble::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 5px;
+    width: 15px;
+    height: 15px;
+    background: white;
+    border-bottom: 3px solid black;
+    border-left: 3px solid black;
+    transform: rotate(-45deg);
+}
+
+.bubble.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Click Hint */
+.hint {
+    position: absolute;
+    bottom: 20px;
+    color: #888;
+    animation: blink 2s infinite;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0.5;
+    }
+}

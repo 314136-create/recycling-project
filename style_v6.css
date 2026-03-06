@@ -1,0 +1,239 @@
+/* Style V6: Strict Image Reveal + Top Layer Character with Masking */
+:root {
+    --bg-color: #ffffff;
+    --font-sketch: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: var(--font-sketch);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    overflow: hidden;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 420px;
+    height: 100vh;
+    border: 3px solid black;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    background: white;
+}
+
+/* Header & Stats */
+.header-box {
+    border: 3px solid black;
+    border-radius: 15px;
+    padding: 10px 30px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.stats-box {
+    width: 100%;
+    border: 3px solid black;
+    padding: 15px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+/* Scene */
+.scene {
+    position: relative;
+    width: 320px;
+    height: 280px;
+    margin-bottom: 60px;
+}
+
+/* 
+   Layer 1: Empty Cup (Base)
+   Z-Index 10.
+   Image: cup_empty_new.png
+*/
+.cup-empty {
+    position: absolute;
+    bottom: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 200px;
+    background-image: url('images/cup_empty_new.png');
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: contain;
+    z-index: 10;
+}
+
+/* 
+   Layer 2: Full Cup (Liquid Reveal)
+   Z-Index 20.
+   Image: cup_full_ref.png
+   Animation: Clip Path from Bottom to Top using inset.
+   inset(top right bottom left)
+   Start: inset(100% 0 0 0) -> Hidden from top.
+   End: inset(0 0 0 0) -> Visible.
+*/
+.cup-full {
+    position: absolute;
+    bottom: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 200px;
+    background-image: url('images/cup_full_ref.png');
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: contain;
+    z-index: 20;
+
+    /* Reveal Animation State */
+    clip-path: inset(100% 0 0 0);
+    transition: clip-path 4s linear;
+}
+
+.scene.filling .cup-full {
+    clip-path: inset(0 0 0 0);
+}
+
+/* 
+   Layer 3: Character (The Baby/Cat)
+   USER REQUEST: "Move to Top Layer".
+   Z-Index 50.
+   We place it High, but mask its bottom so it looks inside.
+*/
+.character {
+    position: absolute;
+    width: 130px;
+    height: 130px;
+    /* Start Position: Deep inside cup */
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(50px);
+    background-image: url('images/sprites.png');
+    background-repeat: no-repeat;
+    z-index: 50;
+    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.baby .character {
+    background-position: center top;
+    background-size: 200% auto;
+}
+
+.cat .character {
+    background-position: center bottom;
+    background-size: 200% auto;
+}
+
+/* Active Pop State */
+.character.active {
+    /* Move Up out of cup */
+    transform: translateX(-50%) translateY(-100px);
+}
+
+/* 
+   Layer 4: Body Hider (The Mask)
+   Z-Index 60.
+   Sits on top of Character (Z=50) but matches the Cup's White Body.
+   This hides the character's legs while it is "waiting" inside.
+   When it pops up, it rises ABOVE this mask.
+*/
+.body-mask {
+    position: absolute;
+    bottom: 20px;
+    /* Aligned with Cup Bottom */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    /* Width of Cup Body approx */
+    height: 90px;
+    background: white;
+    border-radius: 0 0 100px 100px;
+    /* Cup shape curve */
+    z-index: 60;
+    pointer-events: none;
+    /* border: 1px solid red; /* Debugging only */
+}
+
+/* Layer 5: Splash */
+.splash-container {
+    position: absolute;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    z-index: 70;
+}
+
+.droplet {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #4e342e;
+    border-radius: 50%;
+}
+
+/* Layer 6: Bubble */
+.bubble {
+    position: absolute;
+    top: -20px;
+    right: -10px;
+    background: white;
+    border: 3px solid black;
+    border-radius: 50%;
+    padding: 10px 20px;
+    font-weight: bold;
+    opacity: 0;
+    transform: scale(0);
+    transition: 0.5s;
+    z-index: 80;
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.bubble.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.bubble::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 5px;
+    width: 15px;
+    height: 15px;
+    background: white;
+    border-bottom: 3px solid black;
+    border-left: 3px solid black;
+    transform: rotate(-45deg);
+}
+
+.hint {
+    position: absolute;
+    bottom: 20px;
+    color: #888;
+    font-weight: bold;
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0.5;
+    }
+}

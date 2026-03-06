@@ -1,0 +1,215 @@
+/* Style V3: Blending Sketch Layout with V2 Animation Logic using 2-Stage Layering */
+:root {
+    --bg-color: #ffffff;
+    --font-sketch: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: var(--font-sketch);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+/* 
+   Container (Sketch Style) 
+   Clicking anywhere here triggers functionality.
+*/
+.app-container {
+    width: 100%;
+    max-width: 420px;
+    height: 100vh;
+    border: 3px solid black;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    background: white;
+}
+
+/* Header & Stats */
+.header-box {
+    border: 3px solid black;
+    border-radius: 15px;
+    padding: 10px 30px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.stats-box {
+    width: 100%;
+    border: 3px solid black;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    background: #fff;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.stat-item {
+    border-bottom: 2px solid #ccc;
+    padding: 5px 0;
+    font-size: 1.1rem;
+}
+
+/* Scene */
+.scene {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    /* Enough space for cup + splashes */
+    margin-top: auto;
+    margin-bottom: 50px;
+}
+
+/* 
+   Layer 1: Empty Cup (Base)
+   Always visible.
+*/
+.cup-base {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    height: 180px;
+    background-image: url('images/cup_empty_v3.png');
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: contain;
+    z-index: 10;
+}
+
+/* 
+   Layer 2: Full Cup (Liquid Reveal)
+   Overlays the Base exactly. 
+   Initially hidden via clip-path or height.
+   Reveals upwards to simulate rising liquid.
+*/
+.cup-fill {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    height: 180px;
+    background-image: url('images/cup_full_v3.png');
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: contain;
+    z-index: 11;
+    /* On top of base */
+
+    /* Animation: Reveal from bottom */
+    /* Clip Path: inset(top right bottom left) */
+    /* Start: Mask EVERYTHING from top (inset top=100%) down to like 10%? */
+    /* We want to act like rising liquid. */
+    clip-path: inset(100% 0 0 0);
+    /* Fully hidden from top down */
+    transition: clip-path 5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scene.active .cup-fill {
+    clip-path: inset(0 0 0 0);
+    /* Fully revealed */
+}
+
+/* 
+   Layer 3: Character (Baby/Cat)
+   Must be BEHIND the cup lines but VISIBLE?
+   Using 'multiply' blend mode on the cup images if they have white backgrounds.
+   If images are transparent PNGs (checkerboard), z-index 9 is enough.
+   Assuming uploaded images are transparent or compatible.
+   If X-Ray issue persists, we use the 'Front Cover' trick again?
+   User said "One cup at start".
+   Let's assume images ARE transparent.
+   Character sits inside cup (Z=9)
+*/
+.character {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    /* Hidden low */
+    background-image: url('images/sprites.png');
+    background-repeat: no-repeat;
+    z-index: 9;
+    /* Behind cup (10) */
+    transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.baby .character {
+    background-position: center top;
+    background-size: 200% auto;
+}
+
+.cat .character {
+    background-position: center bottom;
+    background-size: 200% auto;
+}
+
+/* 
+   Character Pop Logic
+   When .pop class is added, it moves up.
+*/
+.character.pop {
+    transform: translateX(-50%) translateY(-50px);
+}
+
+/* 
+   Front Hide Mask (Optional)
+   If character shows through the bottom of the cup (transparent glass?), we need a mask.
+   If cup images are opaque white body, we are fine.
+   Assuming cup body is opaque.
+*/
+
+/* Bubble */
+.bubble {
+    position: absolute;
+    top: -40px;
+    right: -10px;
+    background: white;
+    border: 3px solid black;
+    border-radius: 50%;
+    padding: 10px 20px;
+    font-weight: bold;
+    opacity: 0;
+    transform: scale(0);
+    transition: 0.5s;
+    z-index: 50;
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.bubble.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Hint */
+.hint {
+    position: absolute;
+    bottom: 20px;
+    color: #555;
+    font-weight: bold;
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0.5;
+    }
+}

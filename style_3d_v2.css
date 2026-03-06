@@ -1,0 +1,366 @@
+/* 3D Scene Styles V3 (Sketch Layout) */
+:root {
+    --primary-color: #3e2723;
+    --text-box-border: #333;
+    --bg-color: #ffffff;
+    --font-hand: 'Noto Sans TC', sans-serif;
+    /* Clean font */
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: var(--font-hand);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 400px;
+    /* Mobile width */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Header pill style from sketch */
+.header-pill {
+    border: 3px solid var(--text-box-border);
+    border-radius: 30px;
+    padding: 10px 40px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: var(--text-box-border);
+    background: white;
+}
+
+/* Info Panel (Text Boxes) */
+.info-panel {
+    width: 100%;
+    border: 3px solid var(--text-box-border);
+    border-radius: 10px;
+    /* Slight round */
+    padding: 15px;
+    margin-bottom: 20px;
+    background: white;
+    opacity: 0;
+    /* Hidden initially, shows on NFC */
+    transform: translateY(-10px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.info-item {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin: 10px 0;
+    border-bottom: 2px solid #eee;
+    /* Light underline separation */
+    padding-bottom: 5px;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+/* The Cup Scene */
+.scene {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    margin-top: 20px;
+    perspective: 1000px;
+}
+
+.cup-3d {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 130px;
+    border-radius: 0 0 100px 100px;
+    background: white;
+    border: 4px solid var(--text-box-border);
+    /* Sketch style outline */
+    z-index: 10;
+    overflow: hidden;
+    /* Mask liquid inside cup */
+}
+
+/* Liquid */
+.liquid-fill {
+    position: absolute;
+    bottom: -150px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #4e342e;
+    /* Flat coffee color per sketch */
+    transition: bottom 4s ease-in-out;
+}
+
+/* Character Container */
+/* 
+   We need the character to appear "Rising from liquid".
+   Since the cup-3d has overflow:hidden, the character must be INSIDE .cup-3d to be masked by the cup shape?
+   NO. If it pops OUT, it must break overflow.
+   BUT it must also be masked by liquid line?
+   
+   Sketch logic: 
+   1. Liquid rises.
+   2. Character pops OUT of the liquid surface.
+   
+   If character is BEHIND the cup front rim but ABOVE the liquid, we need layering.
+   Let's place Character BEHIND the Cup Border but ABOVE the Liquid.
+*/
+
+.character-container {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    left: 50%;
+    bottom: 20px;
+    /* Start aligned with cup bottom internally */
+    transform: translateX(-50%) translateY(100%);
+    /* Push down initially */
+    z-index: 9;
+    /* Behind cup border (which is on cup-3d) */
+}
+
+/* We need cup outline to cover the bottom part of character if it sits deep.
+   Since cup-3d has background white, it covers whatever is behind it.
+   So let's put character BEHIND cup-3d?
+   If behind, it won't show over the LIQUID.
+   
+   Solution: Character is INSIDE cup-3d.
+   cup-3d does NOT have overflow:hidden.
+   Instead, we use a separate "Mask Layer" for liquid.
+*/
+
+.cup-3d {
+    overflow: visible;
+    /* Let character pop out top */
+}
+
+.liquid-mask {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0 0 100px 100px;
+    overflow: hidden;
+    z-index: 5;
+    /* Liquid is lowest in stack */
+}
+
+.cup-border {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 4px solid var(--text-box-border);
+    border-radius: 0 0 100px 100px;
+    z-index: 20;
+    /* Border on top */
+    pointer-events: none;
+}
+
+.character-container {
+    z-index: 15;
+    /* Above liquid (5), Below Border (20) */
+}
+
+.character-img {
+    width: 100%;
+    height: 100%;
+    background-image: url('images/sprites.png');
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+}
+
+.baby .character-img {
+    background-position: center top;
+}
+
+.cat .character-img {
+    background-position: center bottom;
+}
+
+
+/* Speech Bubble */
+.speech-bubble {
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    background: white;
+    border: 3px solid #333;
+    border-radius: 50%;
+    /* Sketch shows oval */
+    padding: 15px 10px;
+    width: 80px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    /* Pop effect */
+    z-index: 30;
+}
+
+.speech-bubble::after {
+    /* Tail */
+    content: '';
+    position: absolute;
+    bottom: 0px;
+    left: 10px;
+    border-width: 10px 10px 0;
+    border-style: solid;
+    border-color: #333 transparent;
+    display: block;
+    width: 0;
+    transform: rotate(45deg);
+}
+
+/* Handle */
+.handle {
+    position: absolute;
+    right: -40px;
+    top: 20px;
+    width: 50px;
+    height: 70px;
+    border: 4px solid var(--text-box-border);
+    border-radius: 50%;
+    z-index: 1;
+    /* Behind cup */
+}
+
+/* Splashes (Baby Only) */
+.splash-drop {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #4e342e;
+    border-radius: 50%;
+    border-top-right-radius: 0;
+    opacity: 0;
+    z-index: 25;
+}
+
+/* STATE CLASSES */
+.show-info {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Animation: Liquid Rise */
+.rising .liquid-fill {
+    bottom: 0;
+}
+
+/* Animation: Baby Jump */
+.baby-jump {
+    animation: jumpPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    animation-delay: 2s;
+    /* Wait for liquid */
+}
+
+@keyframes jumpPop {
+    0% {
+        transform: translateX(-50%) translateY(50%);
+        /* Start low */
+    }
+
+    50% {
+        transform: translateX(-50%) translateY(0%);
+        /* Surface */
+    }
+
+    70% {
+        transform: translateX(-50%) translateY(-30%);
+        /* Jump Up */
+    }
+
+    100% {
+        transform: translateX(-50%) translateY(-10%);
+        /* Settle */
+    }
+}
+
+/* Animation: Cat Slow Rise */
+.cat-rise {
+    animation: slowReveal 4s ease-in-out forwards;
+    animation-delay: 0.5s;
+}
+
+@keyframes slowReveal {
+    0% {
+        transform: translateX(-50%) translateY(100%);
+    }
+
+    100% {
+        transform: translateX(-50%) translateY(0%);
+    }
+}
+
+/* Splash Animation */
+.splashing .splash-drop:nth-child(1) {
+    animation: splashLeft 0.6s ease-out forwards 2.5s;
+}
+
+.splashing .splash-drop:nth-child(2) {
+    animation: splashRight 0.6s ease-out forwards 2.5s;
+}
+
+@keyframes splashLeft {
+    0% {
+        opacity: 1;
+        transform: translate(-30px, 50px) scale(0.5);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-70px, -20px) scale(1.5);
+    }
+}
+
+@keyframes splashRight {
+    0% {
+        opacity: 1;
+        transform: translate(30px, 50px) scale(0.5);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(70px, -20px) scale(1.5);
+    }
+}
+
+/* Bubble Show */
+.show-bubble {
+    opacity: 1;
+    transform: scale(1);
+    transition-delay: 3s;
+}
+
+.btn-action {
+    background: #4caf50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 50px;
+}

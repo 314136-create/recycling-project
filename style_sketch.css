@@ -1,0 +1,275 @@
+/* Sketchy Layout V4 - Strict Adherence to Uploaded Sketch & Original Sprites */
+:root {
+    --border-color: #000;
+    --border-width: 3px;
+    --bg-color: #ffffff;
+    --font-sketch: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: var(--font-sketch);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    cursor: pointer;
+    /* Clickable */
+}
+
+.app-container {
+    width: 100%;
+    max-width: 420px;
+    min-height: 100vh;
+    border: var(--border-width) solid var(--border-color);
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    background: #fff;
+}
+
+/* Header Box */
+.header-box {
+    border: var(--border-width) solid var(--border-color);
+    border-radius: 15px;
+    padding: 10px 30px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
+    background: #fff;
+    z-index: 100;
+}
+
+/* Stats Box */
+.stats-box {
+    width: 100%;
+    border: var(--border-width) solid var(--border-color);
+    padding: 15px;
+    margin-bottom: 40px;
+    box-sizing: border-box;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.stat-row {
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 5px;
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.scene {
+    position: relative;
+    width: 280px;
+    height: 280px;
+}
+
+/* 
+   Cup Layer: Shows the bottom part (Cup).
+   Placed IN FRONT of Character (z-index 20).
+*/
+.cup-asset {
+    position: absolute;
+    width: 220px;
+    height: 120px;
+    /* Reduced to crop head */
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-image: url('images/sprites.png');
+    background-repeat: no-repeat;
+    z-index: 20;
+}
+
+/* 
+   Liquid Concealer:
+   White block ON TOP of Cup Layer to hide coffee.
+*/
+.liquid-concealer {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 180px;
+    height: 80px;
+    background: white;
+    z-index: 25;
+    transform-origin: bottom;
+    transition: transform 4s linear;
+}
+
+.filling .liquid-concealer {
+    transform: scaleY(0);
+}
+
+/* 
+   Character Layer: Shows the top part (Head).
+   Placed BEHIND Cup Layer (z-index 10).
+*/
+.char-asset {
+    position: absolute;
+    width: 160px;
+    height: 140px;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(50px);
+    /* Start low behind cup */
+    background-image: url('images/sprites.png');
+    background-repeat: no-repeat;
+    z-index: 10;
+    transition: transform 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* CROPPING OFFSETS */
+.baby .cup-asset {
+    background-position: 10% 25%;
+    background-size: 260% auto;
+}
+
+.baby .char-asset {
+    background-position: 10% 8%;
+    background-size: 260% auto;
+}
+
+.cat .cup-asset {
+    background-position: 10% 98%;
+    background-size: 260% auto;
+}
+
+.cat .char-asset {
+    background-position: 10% 74%;
+    background-size: 260% auto;
+}
+
+/* STATES */
+.baby-active .char-asset {
+    transform: translateX(-50%) translateY(-90px);
+    /* Pop UP */
+    transition-delay: 2s;
+}
+
+.cat-active .char-asset {
+    transform: translateX(-50%) translateY(-90px);
+    transition: transform 4s ease-in-out;
+    transition-delay: 1s;
+}
+
+/* Splashes */
+.splash-l,
+.splash-r {
+    position: absolute;
+    width: 20px;
+    height: 30px;
+    background: #4e342e;
+    border-radius: 50%;
+    bottom: 120px;
+    opacity: 0;
+    z-index: 30;
+}
+
+.splash-l {
+    left: 40px;
+    transform: rotate(-30deg);
+}
+
+.splash-r {
+    right: 40px;
+    transform: rotate(30deg);
+}
+
+.splashing .splash-l {
+    animation: splashLeft 0.5s forwards 3s;
+}
+
+.splashing .splash-r {
+    animation: splashRight 0.5s forwards 3s;
+}
+
+@keyframes splashLeft {
+    from {
+        opacity: 1;
+        transform: translate(0, 0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translate(-40px, -40px);
+    }
+}
+
+@keyframes splashRight {
+    from {
+        opacity: 1;
+        transform: translate(0, 0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translate(40px, -40px);
+    }
+}
+
+/* Speech Bubble */
+.speech-bubble {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border: 3px solid #000;
+    border-radius: 50%;
+    padding: 15px 20px;
+    background: #fff;
+    font-weight: bold;
+    font-size: 1.2rem;
+    opacity: 0;
+    transform: scale(0);
+    transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 50;
+}
+
+.speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    left: -5px;
+    width: 15px;
+    height: 15px;
+    background: #fff;
+    border-bottom: 3px solid #000;
+    border-left: 3px solid #000;
+    transform: rotate(45deg);
+}
+
+.show-bubble {
+    opacity: 1;
+    transform: scale(1);
+    transition-delay: 3.5s;
+}
+
+/* Click Hint */
+.click-hint {
+    position: absolute;
+    bottom: 10px;
+    color: #999;
+    font-size: 0.8rem;
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.btn-action {
+    display: none;
+}
